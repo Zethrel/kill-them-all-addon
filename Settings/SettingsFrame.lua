@@ -132,7 +132,7 @@ function InitSettingsFrames()
 
 
 	-- SOUND CHANNEL
-	local soundChannelLabel = CreateLabel(mainFrame, "Sound channel", buttons);
+	local soundChannelLabel = CreateLabel(mainFrame, "Sound channel");
 	soundChannelLabel:SetPoint("TOPLEFT", soundChannelLabelAnchor, "BOTTOMLEFT", -5.0, -10.0 - l_fMarginYBetweenElements);
 
 	local availableSoundChannels = table.Clone(GetAvailableSoundChannels());

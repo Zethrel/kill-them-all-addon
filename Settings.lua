@@ -106,8 +106,17 @@ local function SetOverrideValue(sVariableName, value)
 		hardValue = TableToString(hardValue) or "NONE";	-- I hate this but i can't be bothered
 	end
 
-	if (g_ktaCurrentCharSettingsOverrides == nil or g_ktaCurrentCharSettingsOverrides[sVariableName] == nil) and g_ktaCurrentSettings[sVariableName] == hardValue then
-		return;		-- This happens on load, when we're setting the gods and delay for the first time
+	-- Nothing left to do once the value is already stored. This fires on load,
+	-- when the gods and delay are set for the first time, and it is also what
+	-- terminates the recursion below: committing a value re-enters SetDelay /
+	-- SetGods, which comes straight back here. Testing only for "no override
+	-- yet" was not enough -- the second pass always has one, so a value that
+	-- differed from the saved global recursed until the stack gave out.
+	if g_ktaCurrentSettings[sVariableName] == hardValue
+		and (g_ktaCurrentCharSettingsOverrides == nil
+			or g_ktaCurrentCharSettingsOverrides[sVariableName] == nil
+			or g_ktaCurrentCharSettingsOverrides[sVariableName] == hardValue) then
+		return;
 	end
 
 	g_ktaCurrentCharSettingsOverrides = g_ktaCurrentCharSettingsOverrides or {};

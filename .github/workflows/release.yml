@@ -1,0 +1,95 @@
+name: Release
+
+# Tag a commit to cut a release:
+#   git tag v1.7.0 && git push origin v1.7.0
+#
+# Builds the zip and attaches it to a GitHub Release. The CurseForge step runs
+# only once credentials exist, so this is useful immediately with no setup:
+#
+#   CF_API_KEY     repository *secret*   -- CurseForge account settings, API Tokens
+#   CF_PROJECT_ID  repository *variable* -- numeric Project ID on the project page
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    # Mapped to env here so the CurseForge step can be guarded with a plain
+    # env check; the secrets context is not dependable inside a step `if`.
+    env:
+      CF_API_KEY: ${{ secrets.CF_API_KEY }}
+      CF_PROJECT_ID: ${{ vars.CF_PROJECT_ID }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # See ci.yml: Cerberus needs setfenv, so 5.1 and not 5.4.
+      - name: Install Lua 5.1
+        run: sudo apt-get update -qq && sudo apt-get install -y lua5.1 zip
+
+      # Never ship something the suite has not passed.
+      - name: Run the test suite
+        run: lua5.1 Tests/run.lua
+
+      - name: Check the packaging helpers
+        run: CF_SELFTEST=1 ./tools/curseforge-upload.sh
+
+      - name: Build the release zip
+        id: build
+        run: |
+          ./tools/package.sh
+          echo "zip=$(ls dist/*.zip | head -1)" >> "$GITHUB_OUTPUT"
+          echo "version=$(sed -n 's/^## Version:[[:space:]]*//p' KillThemAll.toc | tr -d '\r')" >> "$GITHUB_OUTPUT"
+          echo "interface=$(sed -n 's/^## Interface:[[:space:]]*//p' KillThemAll.toc | tr -d '\r')" >> "$GITHUB_OUTPUT"
+
+      # A tag that disagrees with the TOC would publish a zip whose filename and
+      # contents contradict the release name.
+      - name: Check the tag matches the TOC version
+        env:
+          VERSION: ${{ steps.build.outputs.version }}
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          if [ "$tag" != "$VERSION" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match '## Version: $VERSION' in KillThemAll.toc"
+            exit 1
+          fi
+
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ZIP: ${{ steps.build.outputs.zip }}
+          VERSION: ${{ steps.build.outputs.version }}
+          INTERFACE: ${{ steps.build.outputs.interface }}
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          notes=$(cat <<EOF
+          KillThemAll $VERSION, built for interface $INTERFACE.
+
+          Download the zip below and extract it into
+          \`World of Warcraft/_retail_/Interface/AddOns/\`.
+          You should end up with an \`AddOns/KillThemAll/\` folder containing \`KillThemAll.toc\`.
+          EOF
+          )
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$ZIP" --clobber
+          else
+            gh release create "$tag" "$ZIP" --title "KillThemAll $VERSION" --notes "$notes"
+          fi
+
+      - name: Upload to CurseForge
+        if: env.CF_API_KEY != '' && env.CF_PROJECT_ID != ''
+        env:
+          CF_CHANGELOG: "Release ${{ github.ref_name }}. See the GitHub release for details."
+        run: ./tools/curseforge-upload.sh "${{ steps.build.outputs.zip }}"
+
+      - name: Note when CurseForge was skipped
+        if: env.CF_API_KEY == '' || env.CF_PROJECT_ID == ''
+        run: |
+          echo "::notice::CurseForge upload skipped -- set the CF_API_KEY secret and the CF_PROJECT_ID variable to enable it."
