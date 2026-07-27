@@ -28,7 +28,7 @@ jobs:
       CF_PROJECT_ID: ${{ vars.CF_PROJECT_ID }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # See ci.yml: Cerberus needs setfenv, so 5.1 and not 5.4.
       - name: Install Lua 5.1
