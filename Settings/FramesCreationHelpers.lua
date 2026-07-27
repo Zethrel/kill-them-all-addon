@@ -76,7 +76,7 @@ function CreateCheckButton(sName, parent, fSize, OnCheckCallback, callbackArgume
 	checkButton:SetSize(fSize, fSize);
 
 	if OnCheckCallback ~= nil then
-		button:SetScript("OnClick", function(self) OnCheckCallback(self, unpack(callbackArguments)) end);
+		checkButton:SetScript("OnClick", function(self) OnCheckCallback(self, unpack(callbackArguments)) end);
 	end
 
 	return checkButton;

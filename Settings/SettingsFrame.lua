@@ -13,6 +13,15 @@ end
 
 function OpenSettingsPanel()
 
+	-- Retail (11.0+): the old InterfaceOptions frame is gone, categories are opened by ID.
+	if Settings ~= nil and Settings.OpenToCategory ~= nil then
+
+		if l_interfaceSettingsFrame.categoryID ~= nil then
+			Settings.OpenToCategory(l_interfaceSettingsFrame.categoryID);
+		end
+		return;
+	end
+
 	InterfaceOptionsFrame_OpenToCategory("KillThemAll");
 	InterfaceOptionsFrame_OpenToCategory("KillThemAll");	-- Twice because once only opens the menu, not the right category, for some reason
 end
@@ -167,7 +176,16 @@ function InitSettingsFrames()
 
 
 	-- BIND PANEL TO INTERFACE SETTINGS
-	InterfaceOptions_AddCategory(mainFrame);
+	if Settings ~= nil and Settings.RegisterCanvasLayoutCategory ~= nil then
+
+		-- Retail (11.0+): InterfaceOptions_AddCategory was removed, the Settings API replaces it.
+		local category = Settings.RegisterCanvasLayoutCategory(mainFrame, mainFrame.name);
+		Settings.RegisterAddOnCategory(category);
+
+		l_interfaceSettingsFrame.categoryID = category:GetID();
+	else
+		InterfaceOptions_AddCategory(mainFrame);
+	end
 
 
 	l_interfaceSettingsFrame.panel = mainFrame;

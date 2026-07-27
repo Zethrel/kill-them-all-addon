@@ -194,7 +194,7 @@ function TryParseSoundChannel(sSoundChannel, sDefaultChannel, bSilent)
 
 	sSoundChannel = string.upper(sSoundChannel);
 
-	if soundChannel == "DEFAULT" and l_soundChannels["DEFAULT"] == nil then
+	if sSoundChannel == "DEFAULT" and l_soundChannels["DEFAULT"] == nil then
 		l_soundChannels["DEFAULT"] = g_ktaCurrentSettings.m_default.m_sSoundChannel;
 	end
 

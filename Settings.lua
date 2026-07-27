@@ -162,7 +162,7 @@ function SaveDefaultVariableAsGlobal(sVariableName)
 		return;
 	end
 
-	S_ktaGlobalSettings.m_default[sVariableName] = g_ktaCurrentCharSettingsOverrides[sVariableName];
+	S_ktaGlobalSettings.m_default[sVariableName] = g_ktaCurrentCharSettingsOverrides.m_default[sVariableName];
 	g_ktaCurrentSettings.m_default[sVariableName] = g_ktaCurrentCharSettingsOverrides.m_default[sVariableName];
 	g_ktaCurrentCharSettingsOverrides.m_default[sVariableName] = nil;
 
@@ -174,12 +174,6 @@ function SaveDefaultVariableAsGlobal(sVariableName)
 			g_ktaCurrentCharSettingsOverrides = nil;
 		end
 	end
-
-	g_ktaCurrentCharSettingsOverrides = g_ktaCurrentCharSettingsOverrides or {};
-	g_ktaCurrentCharSettingsOverrides.m_default = g_ktaCurrentCharSettingsOverrides.m_default or {};
-
-	g_ktaCurrentCharSettingsOverrides.m_default[sVariableName] = value;
-	g_ktaCurrentSettings.m_default[sVariableName] = value;
 end
 
 function RemoveVariableOverride(sVariableName)
@@ -284,7 +278,9 @@ local RecoverFromEarlierVersion = nil; --[[function()]]
 
 --[[local]] TryRecoverPreviousVersion = function()
 
-	local sCurrentAddonVersion = GetAddOnMetadata("KillThemAll", "Version");
+	-- Retail (11.0+): the GetAddOnMetadata global was removed in favour of the C_AddOns namespace.
+	local GetMetadata = (C_AddOns ~= nil and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata;
+	local sCurrentAddonVersion = GetMetadata("KillThemAll", "Version");
 	local sCurrentlySavedAddonVersion = S_sAddonVersion or S_AddonVersion;
 	S_sAddonVersion = sCurrentAddonVersion;
 

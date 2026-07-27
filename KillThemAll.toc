@@ -1,8 +1,10 @@
-## Interface: 100207
+## Interface: 120007
 ## Title: |cff00ccffKillThemAll|r
-## Version: 1.6.4
+## Version: 1.7.0
 ## Notes: Randomly plays Old Gods whispers audio files
 ## Author: Thex
+## Category: Roleplay
+## IconTexture: Interface\Icons\Spell_shadow_auraofdarkness
 ## DefaultState: enabled
 ## SavedVariables: S_ktaGlobalSettings, S_ktaCharSpecificOverrides, S_sAddonVersion
 

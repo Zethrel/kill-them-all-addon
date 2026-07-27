@@ -124,10 +124,9 @@ local function SetNoGods()
 	g_currentGods = {};
 end
 
-local function SetDefaultGods(godsNames)
+local function SetDefaultGods(bSilent)
 
 	local defaultGods = GetWords(string.upper(g_ktaCurrentSettings.m_default.m_sGods));
-	local containsAll = TableContains(defaultGods, "ALL");
 
 	SetGods(defaultGods, bSilent);
 end
@@ -164,7 +163,7 @@ local function SetGodsFromList(godsNames, bSilent)
 
 	if bDefaultCall then
 		table.remove(godsNames, iDefaultIndex);
-		SetDefaultGods(godsNames);
+		SetDefaultGods(bSilent);
 	else
 		SetSpecificGods(godsNames, bSilent);
 	end
