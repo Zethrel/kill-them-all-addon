@@ -49,17 +49,26 @@ jobs:
           echo "version=$(sed -n 's/^## Version:[[:space:]]*//p' KillThemAll.toc | tr -d '\r')" >> "$GITHUB_OUTPUT"
           echo "interface=$(sed -n 's/^## Interface:[[:space:]]*//p' KillThemAll.toc | tr -d '\r')" >> "$GITHUB_OUTPUT"
 
-      # A tag that disagrees with the TOC would publish a zip whose filename and
-      # contents contradict the release name.
-      - name: Check the tag matches the TOC version
+      # Two ways in. A tag push carries the tag, and it must agree with the TOC
+      # or the zip's filename would contradict the release name. A manual run
+      # from the Actions tab has no tag, so it derives one from the TOC -- that
+      # is the path to use when pushing a tag is impractical, such as on mobile.
+      - name: Resolve the release tag
+        id: tag
         env:
           VERSION: ${{ steps.build.outputs.version }}
         run: |
-          tag="${GITHUB_REF_NAME#v}"
-          if [ "$tag" != "$VERSION" ]; then
-            echo "::error::tag $GITHUB_REF_NAME does not match '## Version: $VERSION' in KillThemAll.toc"
-            exit 1
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            tag="v$VERSION"
+          else
+            tag="$GITHUB_REF_NAME"
+            if [ "${tag#v}" != "$VERSION" ]; then
+              echo "::error::tag $tag does not match '## Version: $VERSION' in KillThemAll.toc"
+              exit 1
+            fi
           fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Releasing as $tag"
 
       - name: Create the GitHub Release
         env:
@@ -67,8 +76,9 @@ jobs:
           ZIP: ${{ steps.build.outputs.zip }}
           VERSION: ${{ steps.build.outputs.version }}
           INTERFACE: ${{ steps.build.outputs.interface }}
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          tag="${GITHUB_REF_NAME}"
+          tag="$TAG"
           notes=$(cat <<EOF
           KillThemAll $VERSION, built for interface $INTERFACE.
 
@@ -80,7 +90,12 @@ jobs:
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" "$ZIP" --clobber
           else
-            gh release create "$tag" "$ZIP" --title "KillThemAll $VERSION" --notes "$notes"
+            # --target creates the tag at this commit when it does not already
+            # exist, which is what makes a manual run self-sufficient.
+            gh release create "$tag" "$ZIP" \
+              --target "$GITHUB_SHA" \
+              --title "KillThemAll $VERSION" \
+              --notes "$notes"
           fi
 
       - name: Upload to CurseForge
