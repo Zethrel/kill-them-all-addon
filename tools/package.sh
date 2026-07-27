@@ -116,11 +116,17 @@ rm -f "$ZIP"
 (cd "$STAGE" && zip -qr9 "$ZIP" "$ADDON" -x '*.DS_Store' -x '__MACOSX*')
 
 # The folder inside the zip must match the TOC name or the game will not load it.
-if ! unzip -l "$ZIP" | grep -q " $ADDON/$TOC$"; then
+#
+# Tested with a bash string match rather than `unzip -l | grep -q`: grep -q
+# exits on the first match, which kills unzip with SIGPIPE, and under
+# `set -o pipefail` that turns a healthy zip into an intermittent failure.
+listing="$(unzip -l "$ZIP")"
+if [[ "$listing" != *" $ADDON/$TOC"* ]]; then
 	echo "error: $ADDON/$TOC is missing from the zip." >&2
 	exit 1
 fi
 
-echo "  wrote $OUT_DIR/$ADDON-$VERSION.zip ($(du -h "$ZIP" | cut -f1 | tr -d ' '), $(unzip -l "$ZIP" | tail -1 | awk '{print $2}') files)"
+file_count="$(printf '%s\n' "$listing" | tail -1 | awk '{print $2}')"
+echo "  wrote $OUT_DIR/$ADDON-$VERSION.zip ($(du -h "$ZIP" | cut -f1 | tr -d ' '), $file_count files)"
 echo
 echo "Install: unzip into World of Warcraft/_retail_/Interface/AddOns/"
