@@ -10,7 +10,7 @@ jobs:
     name: Tests and packaging check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Lua 5.1 specifically. Libraries/Cerberus sandboxes every file with
       # setfenv/getfenv, which 5.2 deprecated and 5.4 removed, so the suite
