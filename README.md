@@ -8,6 +8,22 @@ Original addon by Thex ([upstream repo](https://github.com/Thex-PiedDroit/KillTh
 that updates it for **Midnight (12.0.7)**, since upstream last shipped against
 Interface 100207 (Dragonflight 10.2.7).
 
+## Download
+
+**[Latest release](https://github.com/Zethrel/kill-them-all-addon/releases/latest)**
+— currently [v1.7.1](https://github.com/Zethrel/kill-them-all-addon/releases/tag/v1.7.1),
+built for interface 120007.
+
+Grab `KillThemAll-<version>.zip` from the release and extract it into:
+
+```
+World of Warcraft/_retail_/Interface/AddOns/
+```
+
+You should end up with an `AddOns/KillThemAll/` folder containing
+`KillThemAll.toc`. Restart the client afterwards rather than using `/reload` —
+newly added addons are not picked up by a reload.
+
 ## Why bumping the .toc alone did not work
 
 Setting `## Interface: 120007` gets the addon *loaded*, but it still errors out,
@@ -97,16 +113,23 @@ since a file missing from the TOC loads in the harness but never in the game.
 
 ## Releasing
 
-Tag a commit; CI runs the suite, builds the zip, and attaches it to a GitHub
-Release.
+Either route runs the suite, builds the zip, and attaches it to a GitHub
+Release. Bump `## Version:` in the TOC first.
+
+**From the Actions tab** — no terminal, so this is the one that works on
+mobile. Run the *Release* workflow against `main`; it derives the tag from the
+TOC and creates it.
+
+**By tag:**
 
 ```sh
-git tag v1.7.1 && git push origin v1.7.1
+git tag -a v1.8.0 -m "KillThemAll 1.8.0" && git push origin v1.8.0
 ```
 
-The tag must match `## Version:` in the TOC or the workflow fails. CurseForge
-upload is skipped until the `CF_API_KEY` secret and `CF_PROJECT_ID` variable are
-set on the repository.
+A pushed tag must match `## Version:` in the TOC or the workflow fails, so the
+zip's filename can never contradict the release name. CurseForge upload is
+skipped until the `CF_API_KEY` secret and `CF_PROJECT_ID` variable are set on
+the repository.
 
 ## Compatibility
 
